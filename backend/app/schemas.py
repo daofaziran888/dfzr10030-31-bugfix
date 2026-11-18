@@ -33,6 +33,16 @@ class ActionPayload(BaseModel):
 
     action: str
     remark: str | None = None
+    operator: str | None = None
+    # 前端为同窗口并发生成的幂等令牌；相同令牌重复提交只保留第一份结果。
+    client_token: str | None = None
+
+
+class CheckResultPayload(BaseModel):
+    """监控分析服务向待复核台账写回核对结果的载荷。"""
+
+    result: str
+    reviewer: str | None = None
 
 
 

@@ -410,7 +410,9 @@ const modules: ModuleCase[] = [
   }
 ]
 const repoKind = 'fullstack'
-const crudModules = modules.filter(m => m.shape === 'crud-table')
+// log_viewer 的终态边界（已处理后忽略必须被拒绝）由 terminal-ledger.spec.ts 专项验收，
+// 不再走通用的「三个动作顺序执行」链路，否则终态拒绝会与通用预期冲突。
+const crudModules = modules.filter(m => m.shape === 'crud-table' && m.key !== 'log_viewer')
 const dagModules = modules.filter(m => m.shape === 'dag-graph')
 const timelineModules = modules.filter(m => m.shape === 'job-timeline')
 const analysisModules = modules.filter(m => m.shape === 'analysis-dashboard')

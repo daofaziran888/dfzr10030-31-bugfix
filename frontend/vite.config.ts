@@ -19,8 +19,10 @@ export default defineConfig({
     // 关掉自动打开页面：起服务时只打印地址，不拉起浏览器
     open: false,
     strictPort: false,
+    // 上下文必须带结尾斜杠：朴素前缀匹配下 "/apiclient" 也以 "/api" 开头，
+    // 用 "/api" 会把 API接入管理 页面错误代理到后端并返回 404。所有真实接口均为 /api/...
     proxy: {
-      '/api': {
+      '/api/': {
         target: proxyTarget,
         changeOrigin: true,
       },

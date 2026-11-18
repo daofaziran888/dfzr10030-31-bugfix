@@ -74,5 +74,30 @@ npm run dev
 - 列表接口统一返回 `{ items, total, page, size }`，动作接口统一返回 `{ ok, message }`。
 - 状态流转只允许在 `app/services` 里改，路由层不做业务判断。
 
+## 采集日志终态边界与终态台账
+
+采集日志的「已处理」「已忽略」同为终态，由 `app/services/terminal_ledger.py` 统一归并：
+
+- 一条日志只能落一个终态版本（version 恒为 1）。终态落版后，跨终态动作与同终态
+  重复动作一律拒绝，拒绝原因、动作、负责人写入终态台账的 `rejected_actions`，
+  已处理证据（`evidence`）与原摘要（`summary`）保留不丢失。
+- 默认取舍为「已处理终态优先并拒绝忽略」；异常标记 `in_exception_zone` 在终态版本
+  落版时冻结，后续动作无法改写，监控异常数不再来回变化。
+- 同窗口并发按日志加锁串行化，携带相同 `client_token` 的重复提交只保留第一份结果。
+- 监控分析服务同步消费终态台账，落到待复核台账，并通过
+  `POST /api/monitor/pending-review/{log_id}/check` 写回核对结果，重复核对被拒绝。
+
+相关接口：
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /api/log_viewer/terminal-ledger` | 终态日志条目数据台账，支持 `status`、`abnormal_only` 过滤 |
+| `GET /api/log_viewer/terminal-ledger/{id}` | 单条终态版本详情；未命中返回 404 并说明原因 |
+| `POST /api/log_viewer/{id}/actions` | 日志动作；触碰终态边界时 `ok=false` 且状态不变 |
+| `GET /api/monitor/terminal-ledger` | 监控服务读取的终态台账及按版本统计 |
+| `GET /api/monitor/pending-review` | 待复核台账，含空态原因与异常区条目 |
+| `POST /api/monitor/pending-review/{id}/check` | 写回核对结果，重复提交拒绝 |
+
+
 领域：数据工程
 子方向：数据采集、爬虫与RPA
